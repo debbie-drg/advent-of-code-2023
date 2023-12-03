@@ -56,10 +56,23 @@ def find_gears(input_diagram: list[str]) -> int:
     for row_index, line in enumerate(input_diagram):
         for col_index, element in enumerate(line):
             if element == "*":
-                cog = [set() for _ in range(number_lines)]
-                cog[row_index].add(col_index)
-                adjacent_cog = valid_positions(cog)
-                parts_adjacent_cog = part_numbers(input_diagram, adjacent_cog)
+                if row_index == 0:
+                    cog = [set() for _ in range(2)]
+                    cog[0].add(col_index)
+                    adjacent_cog = valid_positions(cog)
+                    parts_adjacent_cog = part_numbers(input_diagram[:1], adjacent_cog)
+                elif row_index == number_lines - 1:
+                    cog = [set() for _ in range(2)]
+                    cog[1].add(col_index)
+                    adjacent_cog = valid_positions(cog)
+                    parts_adjacent_cog = part_numbers(input_diagram[-2:], adjacent_cog)
+                else:
+                    cog = [set() for _ in range(3)]
+                    cog[1].add(col_index)
+                    adjacent_cog = valid_positions(cog)
+                    parts_adjacent_cog = part_numbers(
+                        input_diagram[row_index - 1 : row_index + 2], adjacent_cog
+                    )
                 if len(parts_adjacent_cog) == 2:
                     ratio += parts_adjacent_cog[0] * parts_adjacent_cog[1]
     return ratio
