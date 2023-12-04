@@ -6,7 +6,7 @@ def to_set_int(numbers: str) -> set[int]:
     return set([int(element) for element in re.split("\s+", numbers.strip())])
 
 
-def number_matches(card: str):
+def number_matches(card: str) -> int:
     card = card.split(":")[1]
     winners, numbers = card.split(sep="|")
     winners = to_set_int(winners)
@@ -15,7 +15,7 @@ def number_matches(card: str):
     return len(combination)
 
 
-def card_value(card: str):
+def card_value(card: str) -> int:
     num_matches = number_matches(card)
     return 0 if not num_matches else 2 ** (num_matches - 1)
 
