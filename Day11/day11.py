@@ -2,8 +2,6 @@ import sys
 import re
 from itertools import combinations
 
-# from copy import copy
-
 
 def sum_duples(duple_1: (int, int), duple_2: (int, int)) -> (int, int):
     return (duple_1[0] + duple_2[0], duple_1[1] + duple_2[1])
