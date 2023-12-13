@@ -13,7 +13,8 @@ def replace_and_parse(mirrors: list[str]) -> list[np.ndarray]:
     return return_arrays
 
 
-def is_reflection(mirror: np.ndarray, row: int, tolerance: int = 0) -> bool:
+def is_reflection(mirror: np.ndarray, row: int, smudge: bool = False) -> bool:
+    tolerance = 1 if smudge else 0
     to_top = mirror.shape[0] - row
     number_rows = min(row, to_top)
     min_row = row - number_rows
@@ -21,38 +22,26 @@ def is_reflection(mirror: np.ndarray, row: int, tolerance: int = 0) -> bool:
     return np.sum(mirror[min_row:row] != mirror[row:max_row][::-1]) == tolerance
 
 
-def reflection_detection(mirror: np.ndarray) -> int:
+def detect_reflections(mirror: np.ndarray, smudge: bool = False) -> int:
     candidate_rows = np.where(np.all(np.diff(mirror, axis=0) == 0, axis=1))[0] + 1
+    if smudge:
+        candidate_rows = np.concatenate(
+            (
+                candidate_rows,
+                np.where(np.sum(np.diff(mirror, axis=0) != 0, axis=1) == 1)[0] + 1,
+            )
+        )
     for candidate_row in candidate_rows:
-        if is_reflection(mirror, candidate_row):
-            return 100 * candidate_row
-    candidate_cols = np.where(np.all(np.diff(mirror, axis=1) == 0, axis=0))[0] + 1
-    for candidate_col in candidate_cols:
-        if is_reflection(mirror.T, candidate_col):
-            return candidate_col
-    return 0
+        if is_reflection(mirror, candidate_row, smudge):
+            return candidate_row
+    return -1
 
 
-def smudge_detection(mirror: np.ndarray) -> int:
-    candidate_rows = np.concatenate(
-        (
-            np.where(np.all(np.diff(mirror, axis=0) == 0, axis=1))[0] + 1,
-            np.where(np.sum(np.diff(mirror, axis=0) != 0, axis=1) == 1)[0] + 1,
-        )
-    )
-    for candidate_row in candidate_rows:
-        if is_reflection(mirror, candidate_row, tolerance=1):
-            return 100 * candidate_row
-    candidate_cols = np.concatenate(
-        (
-            np.where(np.all(np.diff(mirror, axis=1) == 0, axis=0))[0] + 1,
-            np.where(np.sum(np.diff(mirror, axis=1) != 0, axis=0) == 1)[0] + 1,
-        )
-    )
-    for candidate_col in candidate_cols:
-        if is_reflection(mirror.T, candidate_col, tolerance=1):
-            return candidate_col
-    return 0
+def reflection_detection(mirror: np.ndarray, smudge: bool = False) -> int:
+    rows = detect_reflections(mirror, smudge)
+    if rows >= 0:
+        return 100 * rows
+    return detect_reflections(mirror.T, smudge)
 
 
 if __name__ == "__main__":
@@ -64,5 +53,6 @@ if __name__ == "__main__":
     mirrors = replace_and_parse(mirrors)
     sum_reflections = sum(map(reflection_detection, mirrors))
     print(f"The sum of the reflections is {sum_reflections}")
+    smudge_detection = lambda x: reflection_detection(x, smudge=True)
     smudge_reflections = sum(map(smudge_detection, mirrors))
     print(f"After cleaning the smudges, it's {smudge_reflections}")
