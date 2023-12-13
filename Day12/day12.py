@@ -1,5 +1,6 @@
 import sys
 from functools import cache
+from multiprocessing import Pool
 
 
 def parse_input(springs_list: list[str]) -> list[tuple[str, tuple[int]]]:
@@ -46,7 +47,8 @@ if __name__ == "__main__":
         file_name = "input.txt"
     springs_list = open(file_name).read().strip().split(sep="\n")
     springs_list = parse_input(springs_list)
-    print(
-        f"The sum of possible arrangements is {sum(map(count_possibilities, springs_list))}"
-    )
-    print(f"When unfolded, the sum is {sum(map(times_five_and_count, springs_list))}")
+    with Pool(processes=12) as pool:
+        print(
+            f"The sum of possible arrangements is {sum(pool.map(count_possibilities, springs_list))}"
+        )
+        print(f"When unfolded, the sum is {sum(pool.map(times_five_and_count, springs_list))}")
