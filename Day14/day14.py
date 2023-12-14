@@ -27,14 +27,18 @@ class RockMap:
             moving_number = pegged_to[rock] + 1
             while True:
                 if rock[0] == 0:
-                    moved_rocks.extend([(rock[0] + index, rock[1]) for index in range(moving_number)])
+                    moved_rocks.extend(
+                        [(rock[0] + index, rock[1]) for index in range(moving_number)]
+                    )
                     break
                 next_position = (rock[0] - 1, rock[1])
                 if next_position in self.rocks:
                     pegged_to[next_position] = moving_number
                     break
                 if next_position in self.obstacles:
-                    moved_rocks.extend([(rock[0] + index, rock[1]) for index in range(moving_number)])
+                    moved_rocks.extend(
+                        [(rock[0] + index, rock[1]) for index in range(moving_number)]
+                    )
                     break
                 rock = next_position
         self.rocks = moved_rocks
