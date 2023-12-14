@@ -26,7 +26,8 @@ class RockMap:
             rock = queue.pop()
             moving_number = pegged_to[rock] + 1
             while True:
-                if rock[0] == 0:
+                next_position = (rock[0] - 1, rock[1])
+                if next_position[0] == -1 or next_position in self.obstacles:
                     moved_rocks.extend(
                         [(rock[0] + index, rock[1]) for index in range(moving_number)]
                     )
@@ -34,11 +35,6 @@ class RockMap:
                 next_position = (rock[0] - 1, rock[1])
                 if next_position in self.rocks:
                     pegged_to[next_position] = moving_number
-                    break
-                if next_position in self.obstacles:
-                    moved_rocks.extend(
-                        [(rock[0] + index, rock[1]) for index in range(moving_number)]
-                    )
                     break
                 rock = next_position
         self.rocks = moved_rocks
@@ -59,21 +55,21 @@ class RockMap:
             self.rotate()
 
     def laod_after_cycles(self, num_cycles: int) -> int:
-        backup_rocks = [set(self.rocks)]
+        backup_rocks = [self.rocks]
         while True:
             num_cycles -= 1
             if num_cycles == 0:
                 return self.total_load()
             self.spin_cycle()
             try:
-                index_cycle = backup_rocks.index(set(self.rocks))
+                index_cycle = backup_rocks.index(self.rocks)
                 cycle_length = len(backup_rocks) - index_cycle
                 num_cycles %= cycle_length
                 self.rocks = list(backup_rocks[index_cycle + num_cycles])
                 return self.total_load()
             except ValueError:
                 pass
-            backup_rocks.append(set(self.rocks))
+            backup_rocks.append(self.rocks)
 
 
 if __name__ == "__main__":
