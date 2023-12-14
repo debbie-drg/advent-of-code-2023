@@ -2,38 +2,36 @@ import sys
 import re
 import time
 
+
 class RockMap:
     def __init__(self, rock_map: list[str]):
         self.width = len(rock_map[0])
         self.depth = len(rock_map)
-        self.rocks = []
+        self.rocks = set()
         self.obstacles = set()
         for index, line in enumerate(rock_map):
             self.obstacles.update(
                 [(index, item.start()) for item in re.finditer("#", line)]
             )
-            self.rocks.extend(
+            self.rocks.update(
                 [(index, item.start()) for item in re.finditer("O", line)]
             )
 
     def slide_north(self):
         moved_rocks = []
         pegged_to = dict()
-        rocks_hash = set(self.rocks)
-        self.rocks.sort()
-        while self.rocks:
-            rock = self.rocks.pop()
-            try:
-                moving_number = pegged_to[rock] + 1
-            except KeyError:
-                moving_number = 1
+        queue = sorted(list(self.rocks))
+        pegged_to = {rock: 0 for rock in self.rocks}
+        while queue:
+            rock = queue.pop()
+            moving_number = pegged_to[rock] + 1
             while True:
                 if rock[0] == 0:
                     for index in range(moving_number):
                         moved_rocks.append((rock[0] + index, rock[1]))
                     break
                 next_position = (rock[0] - 1, rock[1])
-                if next_position in rocks_hash:
+                if next_position in self.rocks:
                     pegged_to[next_position] = moving_number
                     break
                 if next_position in self.obstacles:
@@ -47,7 +45,7 @@ class RockMap:
         return sum([self.depth - rock[0] for rock in self.rocks])
 
     def rotate(self):
-        self.rocks = [(rock[1], self.depth - 1 - rock[0]) for rock in self.rocks]
+        self.rocks = set((rock[1], self.depth - 1 - rock[0]) for rock in self.rocks)
         self.obstacles = set(
             [(obstacle[1], self.depth - 1 - obstacle[0]) for obstacle in self.obstacles]
         )
