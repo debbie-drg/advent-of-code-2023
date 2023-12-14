@@ -19,6 +19,7 @@ class RockMap:
     def slide_north(self):
         moved_rocks = []
         pegged_to = dict()
+        rocks_hash = set(self.rocks)
         self.rocks.sort()
         while self.rocks:
             rock = self.rocks.pop()
@@ -32,7 +33,7 @@ class RockMap:
                         moved_rocks.append((rock[0] + index, rock[1]))
                     break
                 next_position = (rock[0] - 1, rock[1])
-                if next_position in self.rocks:
+                if next_position in rocks_hash:
                     pegged_to[next_position] = moving_number
                     break
                 if next_position in self.obstacles:
