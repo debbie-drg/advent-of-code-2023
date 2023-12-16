@@ -1,4 +1,5 @@
 import sys
+from multiprocessing import Pool
 
 DIRECTIONS = {"N": (-1, 0), "S": (1, 0), "W": (0, -1), "E": (0, 1)}
 MIRROR_DIRECTIONS = {
@@ -43,8 +44,6 @@ class MirrorMap:
         self.map = map
         self.width = len(self.map[0])
         self.depth = len(self.map)
-        self.max_energized = 0
-        self.set_start()
 
     def position_in_map(self, position: tuple[int, int]) -> bool:
         if position[0] < 0:
@@ -57,10 +56,15 @@ class MirrorMap:
             return False
         return True
 
-    def light_travel(self):
+    def count_energized(
+        self, start_position: tuple[int, int] = (0, 0), start_direction: str = "E"
+    ) -> int:
         history = set()
-        while self.beams:
-            beam = self.beams.pop()
+        visited = set()
+        beams = self.start_beams(start_position, start_direction)
+        visited.add(beams[0].location)
+        while beams:
+            beam = beams.pop()
             next_location = beam.next_location()
             if not self.position_in_map(next_location):
                 continue
@@ -69,24 +73,15 @@ class MirrorMap:
             if ((next_location, beam.direction)) in history:
                 continue
             history.add((next_location, beam.direction))
-            self.beams.append(beam)
+            beams.append(beam)
             if new_beam_direction != "O":
-                self.beams.append(Beam(next_location, new_beam_direction))
-            self.visited.add(next_location)
-        self.max_energized = max(self.max_energized, len(self.visited))
+                beams.append(Beam(next_location, new_beam_direction))
+            visited.add(next_location)
+        return len(visited)
 
-    def energized(self):
-        representation = ""
-        for row_index in range(self.depth):
-            for col_index in range(self.width):
-                representation += "#" if (row_index, col_index) in self.visited else "."
-            representation += "\n"
-        return representation
-
-    def set_start(
+    def start_beams(
         self, start_position: tuple[int, int] = (0, 0), start_direction: str = "E"
-    ):
-        self.visited = set([start_position])
+    ) -> list[Beam]:
         start_position_tile = self.map[start_position[0]][start_position[1]]
         move_direction = DIRECTIONS[start_direction]
         pre_start_position = (
@@ -95,22 +90,39 @@ class MirrorMap:
         )
         beam = Beam(pre_start_position, start_direction)
         second_beam_direction = beam.move(start_position_tile)
-        self.beams = [beam]
+        beams = [beam]
         if second_beam_direction != "O":
-            self.beams.append(Beam(start_position, second_beam_direction))
+            beams.append(Beam(start_position, second_beam_direction))
+        return beams
+
+    def start_north(self, position: tuple[int, int]) -> int:
+        return self.count_energized(position, "S")
+
+    def start_south(self, position: tuple[int, int]) -> int:
+        return self.count_energized(position, "N")
+
+    def start_east(self, position: tuple[int, int]) -> int:
+        return self.count_energized(position, "W")
+
+    def start_west(self, position: tuple[int, int]) -> int:
+        return self.count_energized(position, "E")
 
     def check_all(self) -> int:
-        for row_index in range(self.depth):
-            self.set_start((row_index, 0), "E")
-            self.light_travel()
-            self.set_start((row_index, self.width - 1), "W")
-            self.light_travel()
-        for col_index in range(self.width):
-            self.set_start((0, col_index), "S")
-            self.light_travel()
-            self.set_start((self.depth - 1, col_index), "N")
-            self.light_travel()
-        return self.max_energized
+        pool = Pool(8)
+
+        row_starts = [(row, 0) for row in range(self.depth)]
+        max_left = max(pool.map(self.start_west, row_starts))
+
+        row_ends = [(row, self.width - 1) for row in range(self.depth)]
+        max_right = max(pool.map(self.start_east, row_ends))
+
+        column_starts = [(0, col) for col in range(self.width)]
+        max_top = max(pool.map(self.start_north, column_starts))
+
+        column_ends = [(self.depth - 1, col) for col in range(self.width)]
+        max_bottom = max(pool.map(self.start_south, column_ends))
+
+        return max(max_top, max_bottom, max_left, max_right)
 
 
 if __name__ == "__main__":
@@ -120,6 +132,5 @@ if __name__ == "__main__":
         file_name = "input.txt"
     world_map = open(file_name).read().strip().splitlines()
     mirror_map = MirrorMap(world_map)
-    mirror_map.light_travel()
-    print(f"A total of {len(mirror_map.visited)} tiles have been energized.")
+    print(f"A total of {mirror_map.count_energized()} tiles have been energized.")
     print(f"The maximum of tiles that can be energized is {mirror_map.check_all()}.")
