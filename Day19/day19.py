@@ -115,7 +115,7 @@ def eval_parts(workflows_dict: dict, parts: list[str] | None = None) -> int:
                 queue.append([current_interval, instruction[0]])
     if intervals:
         return sum([interval.combinations() for interval in processed_intervals])
-    return sum([interval.value() for interval in set(processed_intervals)])
+    return sum([interval.value() for interval in processed_intervals])
 
 
 if __name__ == "__main__":
