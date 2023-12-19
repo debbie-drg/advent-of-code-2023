@@ -31,23 +31,6 @@ def parse_part(part: str) -> dict[str, int]:
     return part_dict
 
 
-def inspect_part(part: str, workflows_dict: dict) -> int:
-    current_workflow = "in"
-    part = parse_part(part)
-    while current_workflow not in ["A", "R"]:
-        for instruction in workflows_dict[current_workflow]:
-            if len(instruction) == 2:
-                to_eval = instruction[0]
-                if eval(f"{part[to_eval[0]]} {to_eval[1:]}"):
-                    current_workflow = instruction[1]
-                    break
-            if len(instruction) == 1:
-                current_workflow = instruction[0]
-    if current_workflow == "A":
-        return sum(part.values())
-    return 0
-
-
 class Interval:
     def __init__(
         self,
@@ -66,9 +49,23 @@ class Interval:
             result *= interval[1] - interval[0] + 1
         return result
 
+    def value(self) -> int:
+        return sum([value[0] for value in self.extremes.values()])
 
-def eval_intervals(workflows_dict: dict) -> int:
-    queue = [[Interval(), "in"]]
+
+def eval_parts(workflows_dict: dict, parts: list[str] | None = None) -> int:
+    if parts is None:
+        queue = [[Interval(), "in"]]
+        intervals = True
+    else:
+        queue = []
+        for part in parts:
+            part = parse_part(part)
+            to_add_interval = deepcopy(Interval())
+            for variable in part:
+                to_add_interval.extremes[variable] = [part[variable], part[variable]]
+            queue.append([to_add_interval, "in"])
+        intervals = False
     processed_intervals = []
     while queue:
         current_interval, workflow = queue.pop()
@@ -87,6 +84,7 @@ def eval_intervals(workflows_dict: dict) -> int:
                 if symbol == "<":
                     if variable_range[1] < cutoff:
                         queue.append([current_interval, instruction[1]])
+                        break
                     if variable_range[0] < cutoff <= variable_range[1]:
                         new_interval = deepcopy(current_interval)
                         new_interval.extremes[variable] = [
@@ -101,6 +99,7 @@ def eval_intervals(workflows_dict: dict) -> int:
                 if symbol == ">":
                     if variable_range[0] > cutoff:
                         queue.append([current_interval, instruction[1]])
+                        break
                     if variable_range[0] <= cutoff < variable_range[1]:
                         new_interval = deepcopy(current_interval)
                         new_interval.extremes[variable] = [
@@ -114,7 +113,9 @@ def eval_intervals(workflows_dict: dict) -> int:
                         ]
             else:
                 queue.append([current_interval, instruction[0]])
-    return sum([interval.combinations() for interval in processed_intervals])
+    if intervals:
+        return sum([interval.combinations() for interval in processed_intervals])
+    return sum([interval.value() for interval in set(processed_intervals)])
 
 
 if __name__ == "__main__":
@@ -127,8 +128,5 @@ if __name__ == "__main__":
     parts = parts.splitlines()
 
     workflows = workflows_dict(workflows)
-    inspect_parts_dict = lambda x: inspect_part(x, workflows)
-    print(
-        f"The sum of the values of accepted parts is {sum(map(inspect_parts_dict, parts))}"
-    )
-    print(f"The number of accepted combinations is {eval_intervals(workflows)}")
+    print(f"The sum of the values of accepted parts is {eval_parts(workflows, parts)}")
+    print(f"The number of accepted combinations is {eval_parts(workflows)}")
