@@ -116,4 +116,6 @@ if __name__ == "__main__":
         print(
             f"The number of spots that can be visited after walking {num_steps} steps is {garden.num_visitable(num_steps)}"
         )
-        print(f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_infinity(num_steps_large)}")
+        print(
+            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_infinity(num_steps_large)}"
+        )
