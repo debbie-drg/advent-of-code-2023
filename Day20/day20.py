@@ -1,5 +1,6 @@
 import sys
 from collections import deque
+from math import lcm
 
 
 class ModuleEnsemble:
@@ -7,6 +8,7 @@ class ModuleEnsemble:
         self.low_pulses = 0
         self.high_pulses = 0
         self.button_presses = 0
+        self.recorded_result = None
         self.modules = {"button": Module("button", "button -> ")}
         for module in module_data:
             module_name = (
@@ -40,15 +42,55 @@ class ModuleEnsemble:
             if current_queue:
                 queue.extendleft(current_queue)
 
+    def parents_search(self, output_module: str = "rx"):
+        modules = [output_module]
+        while len(modules) == 1:
+            modules = self.modules[modules[0]].inputs
+        found_modules = []
+        for module in modules:
+            module = [module]
+            while True:
+                module = self.modules[module[0]].inputs
+                if len(self.modules[module[0]].inputs) > 1:
+                    found_modules.extend(module)
+                    break
+        return found_modules
+
+    def period_search(
+        self, output_module: str = "rx", monitor_number: int | None = None
+    ) -> int:
+        modules = self.parents_search(output_module)
+        periods = [[0 for _ in self.modules[module].inputs] for module in modules]
+        found = [[False for _ in self.modules[module].inputs] for module in modules]
+        found_overall = [False for _ in modules]
+        while not all(found_overall):
+            self.button_press()
+            if self.button_presses == monitor_number:
+                self.recorded_result = self.high_pulses * self.low_pulses
+            for index, module in enumerate(modules):
+                if found_overall[index]:
+                    continue
+                for state_index, found_state in enumerate(found[index]):
+                    if (not found_state) and self.modules[module].state[state_index]:
+                        periods[index][state_index] = self.button_presses
+                        found[index][state_index] = True
+                if all(found[index]):
+                    found_overall[index] = True
+        numbers = [sum(period) for period in periods]
+        return lcm(*numbers)
+
+    def find_high_low(self, number_presses: int) -> int:
+        if self.recorded_result is not None:
+            return self.recorded_result
+        remaining_presses = number_presses - self.button_presses
+        if remaining_presses < 0:
+            return -1
+        return self.loop_press(remaining_presses)
+
     def loop_press(self, number_presses: int) -> int:
         for _ in range(number_presses):
             self.button_press()
         return self.high_pulses * self.low_pulses
-
-    def monitor_until_machine_on(self, monitor_module: str) -> int:
-        while not self.button_press(monitor_module):
-            pass
-        return self.button_presses
 
     def __repr__(self) -> str:
         return str([module for module in self.modules.values()])
@@ -141,7 +183,9 @@ if __name__ == "__main__":
         file_name = "input.txt"
     module_list = open(file_name).read().strip().splitlines()
     module_ensemble = ModuleEnsemble(module_list)
-    pulses_product = module_ensemble.loop_press(1000)
+    period = module_ensemble.period_search(monitor_number=1000)
+    pulses_product = module_ensemble.find_high_low(1000)
     print(
         f"The product of high and low pulses sent after 1000 iterations is {pulses_product}"
     )
+    print(f"The machine will be turned on after {period} presses.")
