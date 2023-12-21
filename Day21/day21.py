@@ -70,17 +70,35 @@ class Garden:
             history[parity].update(next_positions)
             if not until_all and num_steps == 0:
                 break
-        if not until_all:
-            return history[0]
-        return (steps_done, len(history[0]), len(history[1]))
+        return history
 
-    def num_steps_to_fill_side(self) -> tuple[int]:
-        return self.visitable(0, True, (self.start[0], 0))
+    def all_visitable(self) -> tuple[int]:
+        return self.visitable(0, True)
 
     def num_visitable(self, num_steps: int) -> int:
-        return len(self.visitable(num_steps))
+        return len(self.visitable(num_steps)[0])
 
-    def num_visitable_infinity(self, num_steps: int):
+    def num_visitable_geometric(self, num_steps: int):
+        grid_size = self.width
+        half_size = grid_size // 2
+        odd, even = self.all_visitable()
+
+        even_full = len(even)
+        odd_full = len(odd)
+
+        odd_inner, even_inner = self.visitable(half_size)
+        even_corners = len(even.difference(even_inner))
+        odd_corners = len(odd.difference(odd_inner))
+
+        remaining = (num_steps - half_size) // grid_size
+        return (
+            (remaining + 1) ** 2 * odd_full
+            + remaining**2 * even_full
+            - (remaining + 1) * odd_corners
+            + remaining * even_corners
+        )
+
+    def num_visitable_interpolation(self, num_steps: int):
         grid_size = self.width
         half_size = grid_size // 2
         f0 = self.num_visitable(half_size)
@@ -117,5 +135,5 @@ if __name__ == "__main__":
             f"The number of spots that can be visited after walking {num_steps} steps is {garden.num_visitable(num_steps)}"
         )
         print(
-            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_infinity(num_steps_large)}"
+            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_geometric(num_steps_large)}"
         )
