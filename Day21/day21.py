@@ -48,15 +48,17 @@ class Garden:
         history = [set(), set()]
         steps_done = 0
         if until_all:
-            num_steps = self.width * self.depth
+            num_steps = self.width * self.depth + 1
             within_grid = True
         start_position = self.start if start is None else start
         current_positions = set([start_position])
-        history[num_steps % 2].add(start_position)
+        parity = 0
+        history[0].add(start_position)
         while True:
             next_positions = set()
             num_steps -= 1
-            parity = num_steps % 2
+            parity += 1
+            parity %= 2
             for position in current_positions:
                 next_positions.update(
                     candidate
@@ -76,17 +78,17 @@ class Garden:
         return self.visitable(0, True)
 
     def num_visitable(self, num_steps: int) -> int:
-        return len(self.visitable(num_steps)[0])
+        return len(self.visitable(num_steps)[num_steps % 2])
 
     def num_visitable_geometric(self, num_steps: int):
         grid_size = self.width
         half_size = grid_size // 2
-        odd, even = self.all_visitable()
+        even, odd = self.all_visitable()
 
         even_full = len(even)
         odd_full = len(odd)
 
-        odd_inner, even_inner = self.visitable(half_size)
+        even_inner, odd_inner = self.visitable(half_size)
         even_corners = len(even.difference(even_inner))
         odd_corners = len(odd.difference(odd_inner))
 
@@ -135,5 +137,5 @@ if __name__ == "__main__":
             f"The number of spots that can be visited after walking {num_steps} steps is {garden.num_visitable(num_steps)}"
         )
         print(
-            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_geometric(num_steps_large)}"
+            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_interpolation(num_steps_large)}"
         )
