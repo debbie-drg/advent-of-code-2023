@@ -137,5 +137,5 @@ if __name__ == "__main__":
             f"The number of spots that can be visited after walking {num_steps} steps is {garden.num_visitable(num_steps)}"
         )
         print(
-            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_interpolation(num_steps_large)}"
+            f"The number of spots that can be visited after walking {num_steps_large} steps is {garden.num_visitable_geometric(num_steps_large)}"
         )
