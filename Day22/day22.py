@@ -1,7 +1,7 @@
 import sys
 from typing import Self
-from collections import defaultdict
 from bisect import insort
+from copy import copy
 
 
 def parse_bricks(brick_list: list[str]) -> list[tuple[tuple[int, int, int]]]:
@@ -12,7 +12,6 @@ def parse_bricks(brick_list: list[str]) -> list[tuple[tuple[int, int, int]]]:
             tuple(int(element) for element in coordinates.split(","))
             for coordinates in current_brick
         ]
-        current_brick.sort(key=lambda x: x[2])
         parsed_bricks.append(current_brick)
     parsed_bricks.sort(key=lambda x: x[0][2])
     return [tuple(brick) for brick in parsed_bricks]
@@ -56,11 +55,40 @@ class Brick:
             y_interval_1, y_interval_2
         )
 
-    def can_remove(self):
+    def can_remove(self) -> bool:
         for parent in self.parents:
             if len(parent.children) == 1:
+                self.can_be_removed = False
                 return False
+        self.can_be_removed = True
         return True
+
+    def fall_if_removed(self) -> int:
+        if self.can_be_removed:
+            return 0
+        return self.chain_fall(set([self]))
+
+    def chain_fall(self, falling: set[Self]):
+        count = 0
+        to_fall = set()
+
+        for parent in self.parents:
+            if parent in falling:
+                continue
+            is_supported = False
+            for child in parent.children:
+                if child not in falling:
+                    is_supported = True
+                    break
+            if not is_supported:
+                count += 1
+                falling.add(parent)
+                to_fall.add(parent)
+
+        for brick in to_fall:
+            count += brick.chain_fall(falling)
+
+        return count
 
     def __repr__(self) -> str:
         return f"Brick at {self.location}"
@@ -133,6 +161,9 @@ class BrickWall:
     def vaporizable(self):
         return sum(brick.can_remove() for brick in self.bricks)
 
+    def count_would_fall(self):
+        return sum(brick.fall_if_removed() for brick in self.bricks)
+
 
 if __name__ == "__main__":
     try:
@@ -142,3 +173,4 @@ if __name__ == "__main__":
     bricks = open(file_name).read().strip().splitlines()
     brick_wall = BrickWall(bricks)
     print(f"The number of vaporizable bricks is {brick_wall.vaporizable()}")
+    print(f"The sum of all falling blocks is {brick_wall.count_would_fall()}")
