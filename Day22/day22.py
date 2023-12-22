@@ -1,7 +1,6 @@
 import sys
 from typing import Self
 from bisect import insort
-from copy import copy
 
 
 def parse_bricks(brick_list: list[str]) -> list[tuple[tuple[int, int, int]]]:
