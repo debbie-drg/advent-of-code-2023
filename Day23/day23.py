@@ -103,7 +103,12 @@ class Maze:
     def scenic_path(self):
         visited = set()
         location = (0, 1)
-        return self.max_path_to_exit(visited, location)[0]
+        return self.max_path_to_exit(visited, location)
+
+    def not_actually_slippery(self):
+        for node in self.intersections:
+            for child in self.intersections[node].children:
+                self.intersections[child[0]].children.add((node, child[1]))
 
     def max_path_to_exit(
         self, visited: set, location: tuple[int, int]
@@ -114,19 +119,21 @@ class Maze:
             if node not in visited
         ]
         if not nodes:
-            return 0, [location]
+            return -100000
         max_distance = 0
         for position, distance in nodes:
+            if position in visited:
+                continue
             if position == self.exit:
-                return distance, [location, self.exit]
-            next_distance, path = self.max_path_to_exit(
+                return distance
+            next_distance = self.max_path_to_exit(
                 visited.union([location]), position
             )
             next_distance = distance + next_distance
-            if next_distance > max_distance:
-                max_distance = next_distance
-                max_path = path
-        return max_distance, [location] + max_path
+            max_distance = max(max_distance, next_distance)
+        if max_distance == 0:
+            return -100000
+        return max_distance
 
 
 if __name__ == "__main__":
@@ -137,3 +144,5 @@ if __name__ == "__main__":
     maze_map = open(file_name).read().strip().splitlines()
     maze = Maze(maze_map)
     print(f"The maximum distance is {maze.scenic_path()}")
+    maze.not_actually_slippery()
+    print(f"If the slopes are not slippery, it's {maze.scenic_path()}")
