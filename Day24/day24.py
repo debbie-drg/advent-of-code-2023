@@ -39,10 +39,10 @@ def in_range(
     stone_1: tuple[tuple[int, int, int], tuple[int, int, int]],
     stone_2: tuple[tuple[int, int, int], tuple[int, int, int]],
     interval: list[int],
-):
+) -> bool:
     intersection = intersection_point(stone_1, stone_2)
     if intersection == (None, None):
-        return 0
+        return False
     return (
         interval[0] <= intersection[0] <= interval[1]
         and interval[0] <= intersection[1] <= interval[1]
@@ -51,7 +51,7 @@ def in_range(
 
 def position_throw_obliterate(
     hail_stones: list[tuple[tuple[int, int, int], tuple[int, int, int]]]
-):
+) -> int:
     (x0, y0, z0), (vx0, vy0, vz0) = hail_stones[0]
     (x1, y1, z1), (vx1, vy1, vz1) = hail_stones[1]
     (x2, y2, z2), (vx2, vy2, vz2) = hail_stones[2]
