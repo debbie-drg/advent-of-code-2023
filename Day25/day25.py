@@ -35,7 +35,7 @@ class PartsGraph:
                     return
                 heappush(queue, (distance, path + [neighbour]))
 
-    def compute_bridges(self):
+    def compute_bridges(self) -> int:
         nodes = list(self.nodes.keys())
         for _ in range(200):
             origin, destination = random.sample(nodes, 2)
